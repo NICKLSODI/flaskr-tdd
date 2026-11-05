@@ -3,6 +3,11 @@ import pytest
 import json
 from pathlib import Path
 
+BASE_DIR = Path(__file__).resolve().parent.parent
+os.environ["DATABASE_URL"] = (
+    f"sqlite:///{BASE_DIR.joinpath('test.db')}"  # tests must never touch the real DB
+)
+
 from project.app import app, db
 
 TEST_DB = "test.db"
@@ -76,8 +81,13 @@ def test_messages(client):
     assert b"&lt;Hello&gt;" in rv.data
     assert b"<strong>HTML</strong> allowed here" in rv.data
 
+
 def test_delete_message(client):
     """Ensure the messages are being deleted"""
-    rv = client.get('/delete/1')
+    rv = client.get("/delete/1")
+    data = json.loads(rv.data)
+    assert data["status"] == 0
+    login(client, app.config["USERNAME"], app.config["PASSWORD"])
+    rv = client.get("/delete/1")
     data = json.loads(rv.data)
     assert data["status"] == 1
