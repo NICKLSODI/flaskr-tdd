@@ -100,7 +100,7 @@ def test_search(client):
     client.post("/add", data=dict(title="Other", text="nothing here"), follow_redirects=True)
     rv = client.get("/search/?query=flask")
     assert rv.status_code == 200
-    assert b"Flask" in rv.data
+    assert b"hello world" in rv.data
     assert b"Other" not in rv.data
 
 
