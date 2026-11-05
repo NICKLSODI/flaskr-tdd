@@ -91,3 +91,24 @@ def test_delete_message(client):
     rv = client.get("/delete/1")
     data = json.loads(rv.data)
     assert data["status"] == 1
+
+    
+def test_search(client):
+    """Search returns matching posts only"""
+    login(client, app.config["USERNAME"], app.config["PASSWORD"])
+    client.post("/add", data=dict(title="Flask", text="hello world"), follow_redirects=True)
+    client.post("/add", data=dict(title="Other", text="nothing here"), follow_redirects=True)
+    rv = client.get("/search/?query=flask")
+    assert rv.status_code == 200
+    assert b"Flask" in rv.data
+    assert b"Other" not in rv.data
+
+
+def test_delete_requires_login(client):
+    """Delete is rejected with 401 when logged out, and the post stays"""
+    login(client, app.config["USERNAME"], app.config["PASSWORD"])
+    client.post("/add", data=dict(title="Keep", text="me"), follow_redirects=True)
+    logout(client)
+    rv = client.get("/delete/1")
+    assert rv.status_code == 401
+    assert b"Keep" in client.get("/").data
